@@ -160,8 +160,8 @@ fun AddMedicationScreen(
                 modifier =
                 Modifier
                     .fillMaxWidth()
-                    .padding(vertical = 16.dp)
-                    .height(56.dp),
+                    .padding(horizontal = 16.dp, vertical = 8.dp)
+                    .height(48.dp),
                 onClick = {
                     validateMedication(
                         name = medicationName,
@@ -335,7 +335,7 @@ fun AddMedicationScreen(
                     verticalArrangement = Arrangement.spacedBy(8.dp),
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(250.dp)
+                        .height(180.dp)
                         .padding(horizontal = 0.dp),
                     userScrollEnabled = false
                 ) {
@@ -532,9 +532,11 @@ private fun MedicationTypeBox(
     isSelected: Boolean,
     onSelect: () -> Unit
 ) {
-    Box(
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center,
         modifier = Modifier
-            .aspectRatio(1f)
+            .fillMaxWidth()
             .clip(RoundedCornerShape(12.dp))
             .background(
                 if (isSelected) MaterialTheme.colorScheme.primaryContainer
@@ -547,48 +549,42 @@ private fun MedicationTypeBox(
                 shape = RoundedCornerShape(12.dp)
             )
             .clickable(onClick = onSelect)
-            .padding(12.dp)
+            .padding(vertical = 12.dp, horizontal = 8.dp)
     ) {
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center,
-            modifier = Modifier.fillMaxSize()
-        ) {
-            Icon(
-                painter = painterResource(
-                    when (type) {
-                        MedicationType.TABLET -> R.drawable.ic_tablet
-                        MedicationType.CAPSULE -> R.drawable.ic_capsule
-                        MedicationType.SYRUP -> R.drawable.ic_syrup
-                        MedicationType.DROPS -> R.drawable.ic_drops
-                        MedicationType.SPRAY -> R.drawable.ic_spray
-                        MedicationType.GEL -> R.drawable.ic_gel
-                    }
-                ),
-                contentDescription = null,
-                modifier = Modifier.size(40.dp),
-                tint = if (isSelected) MaterialTheme.colorScheme.primary
-                else MaterialTheme.colorScheme.onSurface
-            )
+        Icon(
+            painter = painterResource(
+                when (type) {
+                    MedicationType.TABLET -> R.drawable.ic_tablet
+                    MedicationType.CAPSULE -> R.drawable.ic_capsule
+                    MedicationType.SYRUP -> R.drawable.ic_syrup
+                    MedicationType.DROPS -> R.drawable.ic_drops
+                    MedicationType.SPRAY -> R.drawable.ic_spray
+                    MedicationType.GEL -> R.drawable.ic_gel
+                }
+            ),
+            contentDescription = null,
+            modifier = Modifier.size(32.dp),
+            tint = if (isSelected) MaterialTheme.colorScheme.primary
+            else MaterialTheme.colorScheme.onSurface
+        )
 
-            Spacer(modifier = Modifier.height(8.dp))
+        Spacer(modifier = Modifier.height(6.dp))
 
-            Text(
-                text = stringResource(
-                    when (type) {
-                        MedicationType.TABLET -> R.string.tablet
-                        MedicationType.CAPSULE -> R.string.capsule
-                        MedicationType.SYRUP -> R.string.type_syrup
-                        MedicationType.DROPS -> R.string.drops
-                        MedicationType.SPRAY -> R.string.spray
-                        MedicationType.GEL -> R.string.gel
-                    }
-                ),
-                style = MaterialTheme.typography.bodySmall,
-                textAlign = TextAlign.Center,
-                color = if (isSelected) MaterialTheme.colorScheme.primary
-                else MaterialTheme.colorScheme.onSurface
-            )
-        }
+        Text(
+            text = stringResource(
+                when (type) {
+                    MedicationType.TABLET -> R.string.tablet
+                    MedicationType.CAPSULE -> R.string.capsule
+                    MedicationType.SYRUP -> R.string.type_syrup
+                    MedicationType.DROPS -> R.string.drops
+                    MedicationType.SPRAY -> R.string.spray
+                    MedicationType.GEL -> R.string.gel
+                }
+            ),
+            style = MaterialTheme.typography.labelSmall,
+            textAlign = TextAlign.Center,
+            color = if (isSelected) MaterialTheme.colorScheme.primary
+            else MaterialTheme.colorScheme.onSurface
+        )
     }
 }

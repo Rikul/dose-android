@@ -19,7 +19,7 @@ android {
         versionCode = libs.versions.version.code.get().toInt()
         versionName = libs.versions.version.name.get()
 
-        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        testInstrumentationRunner = "com.waseefakhtar.doseapp.HiltTestRunner"
         vectorDrawables {
             useSupportLibrary = true
         }
@@ -106,6 +106,8 @@ dependencies {
     androidTestImplementation(libs.junit.ext)
     androidTestImplementation(libs.espresso.core)
     androidTestImplementation(libs.compose.junit.ui)
+    androidTestImplementation(libs.hilt.android.testing)
+    kspAndroidTest(libs.hilt.compiler)
     debugImplementation(libs.compose.ui.tooling.debug)
     debugImplementation(libs.compose.ui.test.manifest)
 }
