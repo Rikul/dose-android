@@ -15,5 +15,10 @@ data class Medication(
     val endDate: Date,
     val medicationTaken: Boolean,
     val medicationTime: Date,
-    val type: MedicationType = MedicationType.getDefault()
+    val type: MedicationType = MedicationType.getDefault(),
+    val doctorName: String? = null,
+    val rxNumber: String? = null,
+    val pharmacyName: String? = null,
+    val pharmacyPhone: String? = null,
+    val instructions: String? = null
 ) : Parcelable

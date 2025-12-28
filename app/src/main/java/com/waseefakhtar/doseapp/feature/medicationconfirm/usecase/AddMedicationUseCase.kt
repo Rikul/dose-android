@@ -9,4 +9,6 @@ class AddMedicationUseCase @Inject constructor(
     private val repository: MedicationRepository
 ) {
     suspend fun addMedication(medications: List<Medication>): Flow<List<Medication>> = repository.insertMedications(medications)
+
+    suspend fun updateMedication(medication: Medication) = repository.updateMedication(medication)
 }

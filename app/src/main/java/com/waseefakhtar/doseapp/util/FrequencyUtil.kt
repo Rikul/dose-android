@@ -28,6 +28,31 @@ enum class Frequency(val stringResId: Int, val days: Int) {
             30 -> EVERY_MONTH
             else -> EVERYDAY
         }
+
+        /**
+         * Attempts to parse a localized frequency string back to a Frequency enum.
+         * Extracts the number from strings like "Every 2 Days" or "Every 3 Weeks".
+         */
+        fun fromLocalizedString(localizedString: String): Frequency {
+            // Check for exact matches first
+            return when {
+                localizedString.contains("Everyday", ignoreCase = true) -> EVERYDAY
+                localizedString.contains("Every Week", ignoreCase = true) &&
+                    !localizedString.matches(Regex(".*\\d+.*")) -> EVERY_WEEK
+                localizedString.contains("Every Month", ignoreCase = true) -> EVERY_MONTH
+
+                // Parse "Every X Days" or "Every X Weeks"
+                localizedString.contains("Days", ignoreCase = true) -> {
+                    val days = Regex("\\d+").find(localizedString)?.value?.toIntOrNull() ?: 1
+                    fromDays(days)
+                }
+                localizedString.contains("Weeks", ignoreCase = true) -> {
+                    val weeks = Regex("\\d+").find(localizedString)?.value?.toIntOrNull() ?: 1
+                    fromDays(weeks * 7)
+                }
+                else -> EVERYDAY
+            }
+        }
     }
 }
 

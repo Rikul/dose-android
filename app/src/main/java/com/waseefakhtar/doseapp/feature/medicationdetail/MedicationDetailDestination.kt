@@ -21,7 +21,8 @@ object MedicationDetailDestination : DoseNavigationDestination {
 fun NavGraphBuilder.medicationDetailGraph(
     bottomBarVisibility: MutableState<Boolean>,
     fabVisibility: MutableState<Boolean>,
-    onBackClicked: () -> Unit
+    onBackClicked: () -> Unit,
+    navigateToEditMedication: (Long) -> Unit
 ) {
     composable(
         route = MedicationDetailDestination.route,
@@ -43,7 +44,8 @@ fun NavGraphBuilder.medicationDetailGraph(
 
         MedicationDetailRoute(
             medicationId = medicationId,
-            onBackClicked = onBackClicked
+            onBackClicked = onBackClicked,
+            navigateToEditMedication = navigateToEditMedication
         )
     }
 }

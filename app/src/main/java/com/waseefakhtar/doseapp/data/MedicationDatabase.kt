@@ -11,9 +11,10 @@ import com.waseefakhtar.doseapp.data.entity.MedicationEntity
 
 @Database(
     entities = [MedicationEntity::class],
-    version = 4,
+    version = 5,
     autoMigrations = [
-        AutoMigration(from = 3, to = 4, spec = MedicationDatabase.AutoMigration::class)
+        AutoMigration(from = 3, to = 4, spec = MedicationDatabase.AutoMigration::class),
+        AutoMigration(from = 4, to = 5)
     ]
 )
 @TypeConverters(Converters::class)

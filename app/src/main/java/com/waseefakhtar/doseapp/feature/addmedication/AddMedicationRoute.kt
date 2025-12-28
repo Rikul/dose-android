@@ -114,6 +114,38 @@ fun AddMedicationScreen(
         ) { mutableStateListOf(CalendarInformation(Calendar.getInstance())) }
     val context = LocalContext.current
     var medicationType by rememberSaveable { mutableStateOf(MedicationType.getDefault()) }
+    var doctorName by rememberSaveable { mutableStateOf("") }
+    var rxNumber by rememberSaveable { mutableStateOf("") }
+    var pharmacyName by rememberSaveable { mutableStateOf("") }
+    var pharmacyPhone by rememberSaveable { mutableStateOf("") }
+    var instructions by rememberSaveable { mutableStateOf("") }
+    
+    val medication = viewModel.medication.value
+    LaunchedEffect(medication) {
+        medication?.let {
+            medicationName = it.name
+            numberOfDosage = it.dosage.toString()
+
+            // Parse the localized frequency string back to enum name
+            frequency = Frequency.fromLocalizedString(it.frequency).name
+
+            // Reconstructing Selected Times:
+            val cal = Calendar.getInstance()
+            cal.time = it.medicationTime
+            selectedTimes.clear()
+            selectedTimes.add(CalendarInformation(cal))
+
+            startDate = it.startDate.time
+            endDate = it.endDate.time
+            medicationType = it.type
+            doctorName = it.doctorName.orEmpty()
+            rxNumber = it.rxNumber.orEmpty()
+            pharmacyName = it.pharmacyName.orEmpty()
+            pharmacyPhone = it.pharmacyPhone.orEmpty()
+            instructions = it.instructions.orEmpty()
+        }
+    }
+
 
     fun addTime(time: CalendarInformation) {
         selectedTimes.add(time)
@@ -148,7 +180,7 @@ fun AddMedicationScreen(
                 title = {
                     Text(
                         modifier = Modifier.padding(16.dp, 0.dp),
-                        text = stringResource(id = R.string.add_medication),
+                        text = stringResource(id = if (viewModel.medication.value == null) R.string.add_medication else R.string.edit_medication),
                         fontWeight = FontWeight.Bold,
                         style = MaterialTheme.typography.displaySmall,
                     )
@@ -171,6 +203,11 @@ fun AddMedicationScreen(
                         endDate = endDate,
                         selectedTimes = selectedTimes,
                         type = medicationType,
+                        doctorName = doctorName,
+                        rxNumber = rxNumber,
+                        pharmacyName = pharmacyName,
+                        pharmacyPhone = pharmacyPhone,
+                        instructions = instructions,
                         onInvalidate = {
                             val invalidatedValue = context.getString(it)
                             showSnackbar(
@@ -192,6 +229,7 @@ fun AddMedicationScreen(
                             viewModel.logEvent(eventName = AnalyticsEvents.ADD_MED_NAVIGATING_TO_MED_CONFIRM)
                         },
                         viewModel = viewModel,
+                        medicationId = viewModel.medication.value?.id
                     )
                 },
                 shape = MaterialTheme.shapes.extraLarge,
@@ -221,7 +259,10 @@ fun AddMedicationScreen(
 
             Spacer(modifier = Modifier.padding(4.dp))
 
-            FrequencyDropdownMenu { frequency = it }
+            FrequencyDropdownMenu(
+                initialFrequency = frequency,
+                frequency = { frequency = it }
+            )
 
             Spacer(modifier = Modifier.padding(4.dp))
 
@@ -274,6 +315,7 @@ fun AddMedicationScreen(
                 ) {
                     TimerTextField(
                         modifier = Modifier.weight(1f),
+                        initialTime = selectedTimes[index],
                         isLastItem = selectedTimes.lastIndex == index,
                         isOnlyItem = selectedTimes.size == 1,
                         time = {
@@ -348,6 +390,56 @@ fun AddMedicationScreen(
                     }
                 }
             }
+
+            Spacer(modifier = Modifier.padding(4.dp))
+            
+            Text(
+                text = "Prescription Information",
+                style = MaterialTheme.typography.bodyLarge,
+                modifier = Modifier.padding(vertical = 8.dp)
+            )
+
+            TextField(
+                modifier = Modifier.fillMaxWidth(),
+                value = doctorName,
+                onValueChange = { doctorName = it },
+                label = { Text("Provider Name") },
+                singleLine = true,
+            )
+            
+            TextField(
+                modifier = Modifier.fillMaxWidth(),
+                value = rxNumber,
+                onValueChange = { rxNumber = it },
+                label = { Text("Rx Number") },
+                singleLine = true,
+            )
+
+            TextField(
+                modifier = Modifier.fillMaxWidth(),
+                value = pharmacyName,
+                onValueChange = { pharmacyName = it },
+                label = { Text("Pharmacy") },
+                singleLine = true,
+            )
+            
+            TextField(
+                modifier = Modifier.fillMaxWidth(),
+                value = pharmacyPhone,
+                onValueChange = { pharmacyPhone = it },
+                label = { Text("Pharmacy Phone #") },
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
+                singleLine = true,
+            )
+            
+            TextField(
+                modifier = Modifier.fillMaxWidth(),
+                value = instructions,
+                onValueChange = { instructions = it },
+                label = { Text("Instructions/Notes") },
+                minLines = 3,
+                maxLines = 3
+            )
         }
     }
 }
@@ -360,9 +452,15 @@ private fun validateMedication(
     endDate: Long,
     selectedTimes: List<CalendarInformation>,
     type: MedicationType,
+    doctorName: String,
+    rxNumber: String,
+    pharmacyName: String,
+    pharmacyPhone: String,
+    instructions: String,
     onInvalidate: (Int) -> Unit,
     onValidate: (List<Medication>) -> Unit,
     viewModel: AddMedicationViewModel,
+    medicationId: Long? = null,
 ) {
     if (name.isEmpty()) {
         onInvalidate(R.string.medication_name)
@@ -397,7 +495,13 @@ private fun validateMedication(
             startDate = Date(startDate),
             endDate = Date(endDate),
             medicationTimes = selectedTimes,
-            type = type
+            type = type,
+            doctorName = doctorName,
+            rxNumber = rxNumber,
+            pharmacyName = pharmacyName,
+            pharmacyPhone = pharmacyPhone,
+            instructions = instructions,
+            medicationId = medicationId
         )
 
     onValidate(medications)
@@ -405,10 +509,24 @@ private fun validateMedication(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun FrequencyDropdownMenu(frequency: (String) -> Unit) {
+fun FrequencyDropdownMenu(
+    initialFrequency: String = Frequency.EVERYDAY.name,
+    frequency: (String) -> Unit
+) {
     val options = getFrequencyList()
     var expanded by remember { mutableStateOf(false) }
-    var selectedOption by remember { mutableStateOf(options[0]) }
+
+    // Find the initial option based on the frequency name
+    val initialOption = remember(initialFrequency) {
+        try {
+            val frequencyEnum = Frequency.valueOf(initialFrequency)
+            options.find { it == frequencyEnum } ?: options[0]
+        } catch (e: IllegalArgumentException) {
+            options[0]
+        }
+    }
+
+    var selectedOption by remember(initialFrequency) { mutableStateOf(initialOption) }
 
     ExposedDropdownMenuBox(
         expanded = expanded,
@@ -468,6 +586,7 @@ fun FrequencyDropdownMenu(frequency: (String) -> Unit) {
 @Composable
 fun TimerTextField(
     modifier: Modifier = Modifier,
+    initialTime: CalendarInformation? = null,
     isLastItem: Boolean,
     isOnlyItem: Boolean,
     time: (CalendarInformation) -> Unit,
@@ -476,10 +595,8 @@ fun TimerTextField(
 ) {
     val interactionSource = remember { MutableInteractionSource() }
     val isPressed: Boolean by interactionSource.collectIsPressedAsState()
-    val currentTime = CalendarInformation(Calendar.getInstance())
-    var selectedTime by rememberSaveable(
-        stateSaver = CalendarInformation.getStateSaver(),
-    ) { mutableStateOf(currentTime) }
+    val defaultTime = initialTime ?: CalendarInformation(Calendar.getInstance())
+    var selectedTime by remember(initialTime) { mutableStateOf(defaultTime) }
 
     TimePickerDialogComponent(
         showDialog = isPressed,

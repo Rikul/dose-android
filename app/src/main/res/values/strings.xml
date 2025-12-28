@@ -98,4 +98,6 @@
     <string name="drops" tools:ignore="MissingTranslation">Drops</string>
     <string name="spray" tools:ignore="MissingTranslation">Spray</string>
     <string name="gel" tools:ignore="MissingTranslation">Gel</string>
+    <string name="edit_medication">Edit Medication</string>
+    <string name="edit">Edit</string>
 </resources>

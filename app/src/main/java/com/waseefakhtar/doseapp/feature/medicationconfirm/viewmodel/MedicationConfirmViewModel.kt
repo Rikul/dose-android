@@ -23,15 +23,48 @@ class MedicationConfirmViewModel @Inject constructor(
     fun addMedication(state: MedicationConfirmState) {
         viewModelScope.launch {
             val medications = state.medications
-            addMedicationUseCase.addMedication(medications).collect { savedMedications ->
-                // Schedule notifications for saved medications that have proper IDs
-                savedMedications.forEach { medication ->
-                    medicationNotificationService.scheduleNotification(
-                        medication = medication,
-                        analyticsHelper = analyticsHelper
-                    )
+
+            // Check if we're editing (first medication has an ID > 0)
+            val isEditing = medications.isNotEmpty() && medications.first().id > 0
+
+            if (isEditing) {
+                // Update the existing medication (first one)
+                val medicationToUpdate = medications.first()
+                addMedicationUseCase.updateMedication(medicationToUpdate)
+
+                // Reschedule notification for the updated medication
+                medicationNotificationService.scheduleNotification(
+                    medication = medicationToUpdate,
+                    analyticsHelper = analyticsHelper
+                )
+
+                // If there are additional medications (new times added), insert them
+                if (medications.size > 1) {
+                    val newMedications = medications.drop(1) // All except the first
+                    addMedicationUseCase.addMedication(newMedications).collect { savedMedications ->
+                        // Schedule notifications for the newly saved medications
+                        savedMedications.forEach { medication ->
+                            medicationNotificationService.scheduleNotification(
+                                medication = medication,
+                                analyticsHelper = analyticsHelper
+                            )
+                        }
+                    }
                 }
+
                 _isMedicationSaved.emit(Unit)
+            } else {
+                // Insert new medications
+                addMedicationUseCase.addMedication(medications).collect { savedMedications ->
+                    // Schedule notifications for saved medications that have proper IDs
+                    savedMedications.forEach { medication ->
+                        medicationNotificationService.scheduleNotification(
+                            medication = medication,
+                            analyticsHelper = analyticsHelper
+                        )
+                    }
+                    _isMedicationSaved.emit(Unit)
+                }
             }
         }
     }
